@@ -96,7 +96,9 @@ avg_delivery_time AS (
 ),
 /* convert average delivery time from seconds to HH:MM:SS format */
 avg_delivery_time_formatted AS (
-    SELECT avg_delivery_time_seconds,
+    SELECT -- average delivery time in seconds
+           avg_delivery_time_seconds,
+           -- average delivery time in hours:minutes:seconds
            to_time(avg_hourly_orders_received) AS avg_delivery_time_hhmmss
     FROM avg_delivery_time
 )
