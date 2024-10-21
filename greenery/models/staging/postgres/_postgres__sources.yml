@@ -1,0 +1,30 @@
+version: 2
+
+sources:
+    - name: postgres
+      description: >
+        Contains user, product and order information for the Greenery
+        e-commerce platform
+      database: raw
+      schema: public
+
+      quoting:
+        database: false
+        schema: false
+        identifier: false
+
+      tables:
+          - name: addresses
+            description: address of each user on the platform
+          - name: users
+            description: contact information for users on the platform
+          - name: promos
+            description: details of promotions offered
+          - name: products
+            description: price and available quantity of products
+          - name: orders
+            description: orders placed on platform, includes shipping and tracking info
+          - name: order_items
+            description: ID and quantity of products included in each order
+          - name: events
+            description: user events on the platform (analytics)
