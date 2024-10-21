@@ -91,12 +91,13 @@ avg_delivery_time AS (
         cast(
             -- round up average delivery time seconds from float to integer
             round(avg(delivery_time_seconds)) AS VARCHAR
-        ) AS avg_hourly_orders_received
+        ) AS avg_delivery_time_seconds
     FROM delivery_times
 ),
 /* convert average delivery time from seconds to HH:MM:SS format */
 avg_delivery_time_formatted AS (
-    SELECT to_time(avg_hourly_orders_received) AS avg_delivery_time_hhmmss
+    SELECT avg_delivery_time_seconds,
+           to_time(avg_hourly_orders_received) AS avg_delivery_time_hhmmss
     FROM avg_delivery_time
 )
 SELECT *
