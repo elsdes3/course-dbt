@@ -1,7 +1,8 @@
 
-target/
-dbt_packages/
-logs/
+target/*
+dbt_packages/*
+logs/*
+!.gitkeep
 
 # Jupyter NB Checkpoints
 .ipynb_checkpoints/
