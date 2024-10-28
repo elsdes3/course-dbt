@@ -1,0 +1,55 @@
+version: 2
+
+models:
+  - name: fct_products
+    description: aggregated event totals for each product
+    columns:
+      - name: product_name
+        description: name of each unique event on the platform
+        data_tests:
+          - not_null
+          - unique
+      - name: num_page_view_sessions
+        description: number of sesssions in which a product was viewed
+        data_tests:
+          - not_null
+          - positive_values
+      - name: num_page_views
+        description: number of views of a product page
+        data_tests:
+          - not_null
+          - positive_values
+      - name: num_purchases
+        description: number of product orders
+        data_tests:
+          - not_null
+          - positive_values
+      - name: rank_traffic
+        description: product rank in terms of page views (traffic)
+        data_tests:
+          - not_null
+          - positive_values
+      - name: rank_purchases
+        description: product rank in terms of purchases
+        data_tests:
+          - not_null
+          - positive_values
+      - name: cart_abandonment_rate
+        description: >
+            rate at which products were added to cart without purchasing
+        data_tests:
+          - not_null
+      - name: avg_time_on_page_seconds
+        description: average time spent viewing product page, in seconds
+        data_tests:
+          - not_null
+          - positive_values
+      - name: is_high_traffic
+        description: >
+            whether product ranks is in top 10 in page views (traffic)
+        data_tests:
+          - not_null
+      - name: is_low_conversions
+        description: whether product ranks is in bottom 10 in purchases
+        data_tests:
+          - not_null

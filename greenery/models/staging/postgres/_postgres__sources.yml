@@ -12,19 +12,26 @@ sources:
         database: false
         schema: false
         identifier: false
-
+      
       tables:
           - name: addresses
             description: address of each user on the platform
+            freshness: null
           - name: users
             description: contact information for users on the platform
+            freshness: null
           - name: promos
             description: details of promotions offered
+            freshness: null
           - name: products
             description: price and available quantity of products
+            freshness: null
           - name: orders
             description: orders placed on platform, includes shipping and tracking info
+            freshness: null
           - name: order_items
             description: ID and quantity of products included in each order
+            freshness: null
           - name: events
             description: user events on the platform (analytics)
+            freshness: null

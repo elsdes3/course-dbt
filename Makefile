@@ -6,13 +6,6 @@
 # COMMANDS                                                                      #
 #################################################################################
 
-## Run lint checks manually
-lint:
-	@echo "+ $@"
-	@if [ ! -d .git ]; then git init && git add .; fi;
-	@tox -e lint
-.PHONY: lint
-
 ## Run Jupyter lab
 build:
 	@echo "+ $@"
@@ -61,6 +54,12 @@ dbt-clean:
 	@echo "+ $@"
 	@tox -e dbt -- clean
 .PHONY: dbt-clean
+
+## Run DBT project evaluator
+dbt-project-evaluator:
+	@echo "+ $@"
+	@tox -e dbt -- build --select package:dbt_project_evaluator
+.PHONY: dbt-project-evaluator
 
 #################################################################################
 # PROJECT RULES                                                                 #

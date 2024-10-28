@@ -2,3 +2,10 @@
 target/
 dbt_packages/
 logs/
+
+# Jupyter NB Checkpoints
+.ipynb_checkpoints/
+
+# (Executed) Jupyter Nnotebooks with Ad-Hoc SQL
+analyses/*/.ipynb_checkpoints/
+analyses/executed-notebooks/*/*.html

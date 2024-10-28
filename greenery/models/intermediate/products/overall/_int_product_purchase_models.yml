@@ -1,0 +1,155 @@
+version: 2
+
+models:
+  - name: int_product_purchases_filtered
+    description: user events on the platform for sessions ending in a purchase
+    columns:
+      - name: event_id
+        description: UUID of each unique event on the platform
+        data_tests:
+          - not_null
+          - unique
+      - name: session_id
+        description: >
+            UUID of each browsing session on the platform which can contain
+            many events
+        data_tests:
+          - not_null
+      - name: created_at
+        description: Timestamp of the event
+        data_tests:
+          - not_null
+      - name: event_type
+        description: Type of event
+        data_tests:
+          - not_null
+          - accepted_values:
+              values:
+                - page_view
+                - add_to_cart
+                - checkout
+                - package_shipped
+      - name: product_id
+        description: > 
+            UUID for each unique product on platform, if the event is specific
+            to a product
+        data_tests:
+          - not_null
+      - name: is_purchased
+        description: indicator that purchase occurred at end of session
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: [1]
+
+  - name: int_product_non_purchases_filtered
+    description: >
+        user events on the platform for sessions not ending in a purchase
+    columns:
+      - name: event_id
+        description: UUID of each unique event on the platform
+        data_tests:
+          - not_null
+          - unique
+      - name: session_id
+        description: >
+            UUID of each browsing session on the platform which can contain
+            many events
+        data_tests:
+          - not_null
+      - name: created_at
+        description: Timestamp of the event
+        data_tests:
+          - not_null
+      - name: event_type
+        description: Type of event
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ['page_view', 'add_to_cart']
+      - name: product_id
+        description: > 
+            UUID for each unique product on platform, if the event is specific
+            to a product
+        data_tests:
+          - not_null
+      - name: is_purchased
+        description: >
+            indicator that purchase did not occurred at end of session
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: [0]
+
+  - name: int_events_sessions_aggregated_to_product
+    description: >
+        count of product page views across sessions ending in a purchase, not
+        ending a purchase, and number of purchases
+    columns:
+      - name: product_id
+        description: UUID for each unique product on platform
+        data_tests:
+          - not_null
+          - unique
+      - name: num_non_purchase_page_view_sessions
+        description: >
+          number of sesssions in which a product was viewed, that did not end
+          in a purchase
+        data_tests:
+          - not_null
+          - positive_values
+      - name: num_purchase_page_view_sessions
+        description: >
+          number of sesssions in which a product was viewed, that did end in a
+          purchase
+        data_tests:
+          - not_null
+          - positive_values
+      - name: num_purchases
+        description: number of purchases of a product
+        data_tests:
+          - not_null
+          - positive_values
+      - name: num_page_views
+        description: number of views of a product page
+        data_tests:
+          - not_null
+          - positive_values
+
+  - name: int_products_page_viewing_time_averaged
+    description: >
+        average and spread (standard deviation) of time spent viewing product
+        page
+    columns:
+      - name: product_id
+        description: UUID for each unique product on platform
+        data_tests:
+          - not_null
+          - unique
+      - name: avg_time_on_page_seconds
+        description: average time spent viewing product page, in seconds
+        data_tests:
+          - not_null
+          - positive_values
+      - name: std_time_on_page_seconds
+        description: >
+            standard deviation of time spent viewing product page, in seconds
+        data_tests:
+          - not_null
+          - positive_values
+
+  - name: int_products_purchase_abandoned_cart_sessions_summed
+    description: count of carts created per product, across all sessions
+    columns:
+      - name: product_id
+        description: UUID for each unique product on platform
+        data_tests:
+          - not_null
+          - unique
+      - name: num_carts
+        description: >
+            number of times product was added to a cart (i.e. the number of
+            shopping carts created containing a product)
+        data_tests:
+          - not_null
+          - positive_values

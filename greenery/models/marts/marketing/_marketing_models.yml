@@ -1,0 +1,118 @@
+version: 2
+
+models:
+  - name: fct_user_orders
+    description: aggregated order totals for each user
+    columns:
+      - name: user_id
+        description: UUID for each unique user on platform
+        data_tests:
+          - not_null
+          - unique
+      - name: state_name
+        description: state this user is based in
+        data_tests:
+          - not_null
+      - name: first_order_date
+        description: date of the first order placed by user
+        data_tests:
+          - order_before_delivery:
+              field: last_order_date
+      - name: last_order_date
+        description: date of the last order placed by user
+      - name: discount_value
+        description: total discount value from promotions redeemed by user
+        data_tests:
+          - not_null
+          - positive_values
+      - name: order_value
+        description: total cost of all orders placed by user
+        data_tests:
+          - not_null
+          - positive_values
+      - name: avg_num_unique_products
+        description: >
+            Average number of Greenery platform products that were purchased
+            by user
+        data_tests:
+          - not_null
+          - positive_values
+      - name: avg_order_size
+        description: >
+            Average quantity of all products that were purchased by user
+        data_tests:
+          - not_null
+          - positive_values
+      - name: num_orders
+        description: total number of orders placed by user
+        data_tests:
+          - not_null
+          - positive_values
+      - name: num_orders_delivered
+        description: total number of orders delivered to user to-date
+        data_tests:
+          - not_null
+          - positive_values
+      - name: num_orders_shipping
+        description: total number of orders being shipped to user to-date
+        data_tests:
+          - not_null
+          - positive_values
+  
+  - name: fct_promo_orders
+    description: aggregated order totals for each promotion
+    columns:
+      - name: promo_id
+        description: Each unique promocode on platform
+        data_tests:
+          - not_null
+          - accepted_values:
+              values:
+                - 'instruction set'
+                - Optional
+                - Mandatory
+                - Digitized
+                - 'task-force'
+                - leverage
+      - name: created_at_date
+        description: Date on which the promotion was used in order
+        data_tests:
+          - not_null
+      - name: num_orders
+        description: Number of orders in which the promotion was used
+        data_tests:
+          - not_null
+          - positive_values
+      - name: promo_discount
+        description: >
+            Total absolute dollar amount that was taken off off with promocode
+        data_tests:
+          - not_null
+          - positive_values
+      - name: shipping_cost
+        description: >
+            Total cost of shipping for orders in which the promotion was used
+        data_tests:
+          - not_null
+          - positive_values
+      - name: order_cost
+        description: >
+            Total dollar amout of the items in orders in which the promotion
+            was used
+        data_tests:
+          - not_null
+          - positive_values
+      - name: avg_num_unique_products
+        description: >
+            Average number of Greenery platform products that were purchased
+            in orders in which the promotion was used
+        data_tests:
+          - not_null
+          - positive_values
+      - name: avg_total_order_size
+        description: >
+            Average quantity of all products that were purchased in orders in
+            which the promotion was used
+        data_tests:
+          - not_null
+          - positive_values

@@ -1,67 +1,129 @@
 version: 2
 
 models:
-  - name: stg_postgres_addresses
-    description: address of each user on the platform
+  - name: stg_postgres_users
+    description: contact information for users on the platform
     columns:
       - name: user_id
         description: UUID for each unique user on platform
+        data_tests:
+          - not_null
+          - unique
       - name: first_name
         description: first name of the user
+        data_tests:
+          - not_null
       - name: last_name
         description: last name of the user
+        data_tests:
+          - not_null
       - name: email
         description: email address of the user
+        data_tests:
+          - not_null
       - name: phone_number
         description: phone number of the user
+        data_tests:
+          - not_null
       - name: created_at
         description: timestamp the user was created
+        data_tests:
+          - not_null
+          - order_before_delivery:
+              field: updated_at
       - name: updated_at
         description: timestamp the user was last updated
       - name: address_id
         description: default delivery address for the user
+        data_tests:
+          - not_null
 
-  - name: stg_postgres_users
-    description: contact information for users on the platform
+  - name: stg_postgres_addresses
+    description: address of each user on the platform
     columns:
       - name: address_id
         description: UUID for each unique address on platform
+        data_tests:
+          - not_null
+          - unique
       - name: address
         description: first few lines of the address
+        data_tests:
+          - not_null
       - name: zipcode
         description: zipcode of the address
+        data_tests:
+          - not_null
+          - positive_values
       - name: state
         description: state this delivery address is based in
+        data_tests:
+          - not_null
       - name: country
         description: country this delivery address is based in
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ['United States']
 
   - name: stg_postgres_promos
     description: details of promotions offered
     columns:
       - name: promo_id
         description: Each unique promocode on platform
+        data_tests:
+          - not_null
+          - unique
+          - accepted_values:
+              values:
+                - 'instruction set'
+                - Optional
+                - Mandatory
+                - Digitized
+                - 'task-force'
+                - leverage
       - name: discount
-        description: Absolute dollar amount that is given off with the code
+        description: Absolute dollar amount that is given off with promocode
+        data_tests:
+          - positive_values
       - name: status
         description: Is the promo code active or disabled
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: [inactive, active]
 
   - name: stg_postgres_products
     description: price and available quantity of products
     columns:
       - name: product_id
         description: UUID for each unique product on platform
+        data_tests:
+          - not_null
+          - unique
       - name: name
         description: Name of the product
+        data_tests:
+          - not_null
       - name: price
         description: Price of the product
+        data_tests:
+          - not_null
+          - positive_values
       - name: inventory
         description: Amount of the inventory we have for this product
+        data_tests:
+          - not_null
+          - positive_values
 
   - name: stg_postgres_orders
     description: orders placed on platform, includes shipping and tracking info
     columns:
       - name: order_id
         description: UUID for each unique order on platform
+        data_tests:
+          - not_null
+          - unique
       - name: user_id
         description: UserId of the user that placed this order
       - name: promo_id
@@ -70,47 +132,88 @@ models:
         description: Delivery address for this order
       - name: created_at
         description: Timestamp when the order was created
+        data_tests:
+          - not_null
+          - order_before_delivery:
+              field: delivered_at
+          - order_before_delivery:
+              field: estimated_delivery_at
       - name: order_cost
-        description: Dollar about of the items in the order
+        description: Dollar amout of the items in the order
+        data_tests:
+          - not_null
+          - positive_values
       - name: shipping_cost
         description: Cost of shipping for the order
+        data_tests:
+          - not_null
+          - positive_values
       - name: order_total
         description: Total cost of the order including shipping
+        data_tests:
+          - not_null
+          - positive_values
       - name: tracking_id
         description: Tracking number for the order/package
       - name: shipping_service
         description: Company that was used for shipping
       - name: estimated_delivery_at
-        description: Estimated date of delivery
+        description: Estimated timestamp of delivery
       - name: delivered_at
         description: Actual timestamp of delivery
       - name: status
         description: Status of the order
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ['delivered', 'shipped', 'preparing']
 
   - name: stg_postgres_order_items
     description: ID and quantity of products included in each order
     columns:
       - name: order_id
         description: OrderId of this order
+        data_tests:
+          - not_null
       - name: product_id
         description: ProductId of a single item in this order
+        data_tests:
+          - not_null
       - name: quantity
         description: Number of units of the product in this order
+        data_tests:
+          - not_null
+          - positive_values
 
   - name: stg_postgres_events
-    description: user events on the platform (analytics)
+    description: user events on the Greenery platform website (analytics)
     columns:
       - name: event_id
         description: UUID of each unique event on the platform
+        data_tests:
+          - not_null
+          - unique
       - name: session_id
-        description: UUID of each browsing session on the platform which can contain many events
+        description: >
+            UUID of each browsing session on the platform which can
+            contain many events
       - name: page_url
         description:  URL that the event happened on
+        data_tests:
+          - not_null
       - name: created_at
         description: Timestamp of the event
+        data_tests:
+          - not_null
       - name: event_type
         description: Type of event
+        data_tests:
+          - not_null
       - name: order_id
-        description: If the event is specific to an order (mostly used for checkout)
+        description: >
+            UUID for each unique order on platform, if the event is specific
+            to an order (mostly used for checkout)
       - name: product_id
-        description: If the event is specific to a product
+        description: >
+            UUID for each unique product on platform, if the event is specific
+            to a product
