@@ -11,27 +11,22 @@ products_purchase_sessions AS (
            product_id,
            event_type
     FROM {{ ref('int_product_purchases_filtered') }}
+    -- (ADDED) get events showing the ID of the purchased product
+    WHERE product_id IS NOT NULL
 ),
-/* count number of sessions not ending in a purchase in which product page was
-viewed */
+/* count number of times product was added to a cart in sessions not ending
+in a purchase */
 product_non_purchase_add_to_cart AS (
-    SELECT product_id,
-           COUNT(*) AS num_non_purchase_add_to_carts
-    FROM products_non_purchase_sessions
-    -- get the add-to-cart event from sessions in which product was added to
-    -- a cart
-    WHERE event_type = 'add_to_cart'
-    GROUP BY product_id
+    {{ count_add_to_carts_by_product(
+        'add_to_cart', 'products_non_purchase_sessions', 'product_id'
+    ) }}
 ),
-/* count number of sessions ending in a purchase in which product page was
-viewed */
+/* count number of times product was added to a cart in sessions ending
+in a purchase */
 product_purchase_add_to_cart AS (
-    SELECT product_id,
-           COUNT(*) AS num_purchase_add_to_carts
-    FROM products_purchase_sessions
-    -- get add-to-cart event from sessions in which product was added to cart
-    WHERE event_type = 'add_to_cart'
-    GROUP BY product_id
+    {{ count_add_to_carts_by_product(
+        'add_to_cart', 'products_purchase_sessions', 'product_id'
+    ) }}
 ),
 /* count number of add to carts */
 product_add_to_carts AS (

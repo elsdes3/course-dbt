@@ -2,35 +2,65 @@ version: 2
 
 models:
   - name: int_orders_joined_to_addresses_promos
-    description: total daily product page views, sessions and orders
+    description: '{{ doc("int_orders_description") }}'
+    data_tests:
+      - dbt_expectations.expect_table_columns_to_match_ordered_list:
+          column_list:
+            - order_id
+            - created_at
+            - user_id
+            - state_name
+            - order_cost
+            - promo_id
+            - shipping_cost
+            - discount
+            - order_total
+            - total_order_size
+            - num_unique_products
+            - status
+            - delivered_at
+            - estimated_delivery_at
+            - is_on_time_delivery
     columns:
       - name: order_id
-        description: UUID for each unique order on platform
+        description: '{{ doc("orders_order_id") }}'
+        data_tests:
+          - unique
+          - dbt_expectations.expect_column_distinct_count_to_equal_other_table:
+              compare_model: ref('stg_postgres_orders')
+              compare_column_name: order_id
+        tags: [dbt_expectations]
       - name: created_at
-        description: Timestamp when the order was created
+        description: '{{ doc("orders_created_at") }}'
         data_tests:
           - order_before_delivery:
               field: delivered_at
           - order_before_delivery:
               field: estimated_delivery_at
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: TIMESTAMP_NTZ
+        tags: [dbt_expectations]
       - name: user_id
-        description: UserId of the user that placed this order
+        description: '{{ doc("orders_user_id") }}'
         data_tests:
           - not_null
       - name: state_name
-        description: state this user address is based in
+        description: '{{ doc("addresses_state") }}'
         data_tests:
           - not_null
       - name: order_cost
-        description: Dollar amout of the items in the order
+        description: '{{ doc("orders_order_cost") }}'
         data_tests:
           - positive_values
       - name: shipping_cost
-        description: Cost of shipping for the order
+        description: '{{ doc("orders_shipping_cost") }}'
         data_tests:
           - positive_values
+          - dbt_utils.expression_is_true:
+              expression: "<order_cost"
+        tags: [dbt_utils]
       - name: promo_id
-        description: Each unique promocode on platform
+        description: '{{ doc("promos_promo_id") }}'
         data_tests:
           - accepted_values:
               values:
@@ -40,36 +70,57 @@ models:
                 - Digitized
                 - 'task-force'
                 - leverage
+          - dbt_expectations.expect_column_distinct_count_to_equal_other_table:
+              compare_model: ref('stg_postgres_promos')
+              compare_column_name: promo_id
+              row_condition: "promo_id is not null"
+        tags: [dbt_expectations]
       - name: discount
-        description: Absolute dollar amount that is given off with the promo code
+        description: '{{ doc("promos_discount") }}'
         data_tests:
           - positive_values
+          - dbt_utils.expression_is_true:
+              expression: ">0"
+              where: "promo_id IS NOT NULL"
+        tags: [dbt_utils]
       - name: order_total
-        description: Total cost of the order including shipping
+        description: '{{ doc("orders_order_total") }}'
         data_tests:
           - positive_values
+          - dbt_utils.expression_is_true:
+              expression: "=ROUND(order_cost+shipping_cost, 2)"
+              where: "promo_id IS NULL"
+          - dbt_utils.expression_is_true:
+              expression: "<ROUND(order_cost+shipping_cost, 2)"
+              where: "promo_id IS NOT NULL"
+        tags: [dbt_utils]
       - name: total_order_size
-        description: Total number of units of the product in this order
+        description: '{{ doc("int_orders_total_order_size") }}'
         data_tests:
           - positive_values
       - name: num_unique_products
-        description: >
-            number of uniqie items offered by Greenery that are included in
-            this order
+        description: '{{ doc("int_orders_num_unique_products") }}'
         data_tests:
           - positive_values
       - name: status
-        description: Status of the order
+        description: '{{ doc("orders_status") }}'
         data_tests:
           - accepted_values:
               values: [delivered, shipped, preparing]
       - name: delivered_at
-        description: Actual timestamp of delivery
+        description: '{{ doc("orders_delivered_at") }}'
+        data_tests:
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: TIMESTAMP_NTZ
+        tags: [dbt_expectations]
       - name: estimated_delivery_at
-        description: Estimated timestamp of delivery
+        description: '{{ doc("orders_estimated_delivery_at") }}'
+        data_tests:
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: TIMESTAMP_NTZ
+        tags: [dbt_expectations]
       - name: is_on_time_delivery
-        description: >
-            whether product was delivered after estimated delivery time
+        description: '{{ doc("int_orders_is_on_time_delivery") }}'
         data_tests:
           - accepted_values:
               values: [True, False]

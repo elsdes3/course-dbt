@@ -1,0 +1,116 @@
+version: 2
+
+macros:
+  - name: add_columns
+    description: calculate the row-wise sum of two columns
+    arguments:
+      - name: column_1
+        type: string
+        description: first of the two columns to be summed
+      - name: column_2
+        type: string
+        description: second of the two columns to be summed
+      - name: col_name_new
+        type: string
+        description: name of the summed column
+
+  - name: case_when
+    description: >
+        implements a single CASE expression, and optionally names the
+        resulting column
+    arguments:
+      - name: when
+        type: string
+        description: WHEN clause in CASE expression
+      - name: then
+        type: string
+        description: THEN clause in CASE expression
+      - name: else
+        type: string
+        description: ELSE clause in CASE expression
+      - name: col_new
+        type: string
+        description: name of newly created column
+
+  - name: count_add_to_carts_by_product
+    description: count number of times a product was added to a shopping cart
+    arguments:
+      - name: event_type
+        type: string
+        description: type of event to be counted (here, this is add-to-carts)
+      - name: cte_name
+        type: string
+        description: >
+            name of the CTE holding add-to-cart events that are to be counted
+      - name: group_by_col_name
+        type: string
+        description: >
+            group over which events are to be aggregated (here, this is the
+            product name)
+
+  - name: count_purchases_views_by_product
+    description: count number of purchases and page views per product
+    arguments:
+      - name: event_type
+        type: string
+        description: type of event to be counted
+      - name: cte_name
+        type: string
+        description: name of the CTE holding events that are to be counted
+      - name: group_by_col_name
+        type: string
+        description: >
+            group over which events are to be aggregated (here, this is the
+            product name)
+
+  - name: filter_sessions_by_last_event
+    description: filter sessions based on the last event in the session
+    arguments:
+      - name: event_types
+        type: list
+        description: >
+            list of types of session-ending events to use to filter sessions
+
+  - name: get_conversion_rates
+    description: get conversion rate by product or overall
+    arguments:
+      - name: agg_type
+        type: string
+        description: >
+            level of aggregation at which to calculate conversion rate (
+            overall or product)
+
+  - name: get_purchase_sessions
+    description: get sessions ending in a purchase
+    arguments:
+      - name: cte_name
+        type: string
+        description: >
+            CTE of events to be filtered to get sessions ending in a
+            purchase
+
+  - name: grant
+    description: >
+        grant a role read-only access to dbt models and personal schema in the
+        snowflake database
+    arguments:
+      - name: role_name
+        type: string
+        description: >
+            name of pre-existing role to be granted permission to access DBT
+            data models in a Snowflake database
+      - name: permission_type
+        type: string
+        description: >
+            type of permission to be granted (select or usage), where select
+            grants the role read-only access to models and usage grants the
+            role privilige to reference a personal schema
+
+  - name: label_status
+    description: >
+        count number of orders of a specified status (gets total of
+        add_bool_indicator column)
+    arguments:
+      - name: ship_status
+        type: string
+        description: shipping status of orders to be counted

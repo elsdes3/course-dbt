@@ -16,10 +16,11 @@ product_traffic_purchases AS (
            num_page_views,
            -- calculate total number of sessions (with or without a purchase)
            -- in which a product page was viewed
-           (
-               num_non_purchase_page_view_sessions
-               +num_purchase_page_view_sessions
-           ) AS num_page_view_sessions
+           {{ add_columns(
+               'num_non_purchase_page_view_sessions',
+               'num_purchase_page_view_sessions',
+               'num_page_view_sessions'
+           ) }}
     FROM {{ ref('int_events_sessions_aggregated_to_product') }}
 ),
 /* combine product metrics and add ranks by page views and purchases */
@@ -51,17 +52,16 @@ product_summary AS (
 product_performance_indicators AS (
     SELECT * EXCLUDE(num_products),
            -- add high-traffic indicator per product
-           (
-               CASE WHEN rank_traffic <= 10 THEN True ELSE False END
-           ) AS is_high_traffic,
+           {{ case_when(
+               'rank_traffic <= 10', True, False, 'is_high_traffic'
+           ) }},
            -- add low-conversion indicator per product
-           (
-               CASE
-                   WHEN rank_purchases >= num_products-10
-                   THEN True
-                   ELSE False
-               END
-           ) AS is_low_conversions
+           {{ case_when(
+               'rank_purchases >= num_products-10',
+               True,
+               False,
+               'is_low_conversions'
+           ) }}
     FROM product_summary
 )
 SELECT *

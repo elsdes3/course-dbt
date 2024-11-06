@@ -2,67 +2,175 @@ version: 2
 
 models:
   - name: fct_orders
-    description: aggregated totals for each orderr
+    description: "{{ doc('fct_orders_description') }}"
+    data_tests:
+      - dbt_expectations.expect_table_columns_to_match_ordered_list:
+          name: unexpected_fct_orders_column_order
+          column_list:
+            - order_id
+            - created_at
+            - state_name
+            - order_cost
+            - promo_id
+            - discount
+            - order_total
+            - total_order_size
+            - num_unique_products
+            - estimated_delivery_at
+            - delivered_at
+            - status
+            - estimated_delivery_time_seconds
+            - delivery_time_seconds
+            - delivery_delay_seconds
     columns:
       - name: order_id
-        description: UUID for each unique order on platform
+        description: "{{ doc('orders_order_id') }}"
         data_tests:
           - unique
+          - dbt_expectations.expect_column_distinct_count_to_equal_other_table:
+              name: unexpected_distinct_order_id_values
+              compare_model: ref('stg_postgres_orders')
+              compare_column_name: order_id
+        tags: [dbt_expectations]
       - name: created_at
-        description: Timestamp when the order was created
+        description: "{{ doc('orders_created_at') }}"
         data_tests:
           - order_before_delivery:
               field: delivered_at
           - order_before_delivery:
               field: estimated_delivery_at
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              name: unexpected_non_timestamp_ntz_order_created_at
+              column_type: TIMESTAMP_NTZ
+        tags: [dbt_expectations]
       - name: state_name
-        description: >
-            state that the delivery address for this order is based in
+        description: "{{ doc('addresses_state') }}"
         data_tests:
           - not_null
       - name: order_cost
-        description: Dollar amout of the items in the order
+        description: '{{ doc("orders_order_cost") }}'
         data_tests:
           - positive_values
       - name: promo_id
-        description: PromoId if any was used in the order
+        description: '{{ doc("promos_promo_id") }}'
+        data_tests:
+          - dbt_expectations.expect_column_distinct_count_to_equal_other_table:
+              name: unexpected_distinct_non_null_promo_ids
+              compare_model: ref('stg_postgres_promos')
+              compare_column_name: promo_id
+              row_condition: "promo_id is not null"
+        tags: [dbt_expectations]
       - name: discount
-        description: total discount value from promotions redeemed in order
+        description: '{{ doc("promos_discount") }}'
         data_tests:
           - positive_values
+        tags: [dbt_utils]
       - name: order_total
-        description: Total cost of the order including shipping
+        description: '{{ doc("orders_order_total") }}'
         data_tests:
           - positive_values
+          - dbt_utils.expression_is_true:
+              name: unexpected_discounted_order_costs
+              expression: ">order_cost"
+              where: "discount = 0"
+        tags: [dbt_utils]
       - name: total_order_size
-        description: >
-            Total quantity of all products that were purchased by user
+        description: '{{ doc("int_orders_total_order_size") }}'
         data_tests:
           - positive_values
       - name: num_unique_products
-        description: >
-            total number of Greenery platform products that were purchased
-            by user
+        description: '{{ doc("int_orders_num_unique_products") }}'
         data_tests:
           - positive_values
       - name: estimated_delivery_at
-        description: Estimated timestamp of delivery
+        description: '{{ doc("orders_estimated_delivery_at") }}'
+        data_tests:
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              name: unexpected_non_timestamp_ntz_order_estimated_delivery
+              column_type: TIMESTAMP_NTZ
+        tags: [dbt_expectations]
       - name: delivered_at
-        description: Actual timestamp of delivery
+        description: '{{ doc("orders_delivered_at") }}'
+        data_tests:
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              name: unexpected_non_timestamp_ntz_order_delivery
+              column_type: TIMESTAMP_NTZ
       - name: status
-        description: Status of the order
+        description: '{{ doc("orders_status") }}'
         data_tests:
           - accepted_values:
-              values: ['delivered', 'shipped', 'preparing']
+              values: [delivered, shipped, preparing]
       - name: estimated_delivery_time_seconds
-        description: >
-            estimated time in seconds after placing order until delivery
+        description: "{{ doc('fct_orders_estimated_delivery_time_seconds') }}"
       - name: delivery_time_seconds
-        description: actual time in seconds after placing order until delivery
+        description: "{{ doc('fct_orders_delivery_time_seconds') }}"
         data_tests:
           - positive_values
       - name: delivery_delay_seconds
-        description: >
-            time in seconds between estimated and actual delivery timestamp
+        description: "{{ doc('fct_orders_delivery_delay_seconds') }}"
         data_tests:
           - positive_values
+  
+  - name: fct_conversion_rate
+    description: "{{ doc('fct_conversion_rate_description') }}"
+    data_tests:
+      - dbt_expectations.expect_table_row_count_to_equal:
+          name: unexpected_conversion_rate_num_rows
+          value: 1
+      - dbt_expectations.expect_table_columns_to_match_ordered_list:
+          name: unexpected_conversion_rate_column_order
+          column_list:
+            - product_name
+            - total_num_page_view_sessions
+            - num_purchase_sessions
+            - conversion_rate
+            - first_event
+            - last_event
+    columns:
+      - name: product_name
+        description: "{{ doc('fct_conversion_rate_product_name') }}"
+        data_tests:
+          - not_null
+          - unique
+          - accepted_values:
+              values: [all]
+      - name: total_num_page_view_sessions
+        description: "{{ doc('fct_conversion_rate_total_num_page_view_sessions') }}"
+        data_tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              name: unexpected_negative_num_product_page_view_sessions
+              expression: ">= 0"
+        tags: [dbt_utils]
+      - name: num_purchase_sessions
+        description: "{{ doc('fct_conversion_rate_num_purchase_sessions') }}"
+        data_tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              name: unexpected_negative_num_product_purchase_sessions
+              expression: ">= 0"
+        tags: [dbt_utils]
+      - name: conversion_rate
+        description: "{{ doc('fct_conversion_rate_conversion_rate') }}"
+        data_tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              name: unexpected_negative_product_conversion_rate
+              expression: ">= 0"
+        tags: [dbt_utils]
+      - name: first_event
+        description: "{{ doc('fct_conversion_rate_first_event') }}"
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              name: unexpected_non_timestamp_ntz_first_order_event
+              column_type: TIMESTAMP_NTZ
+        tags: [dbt_expectations]
+      - name: last_event
+        description: "{{ doc('fct_conversion_rate_last_event') }}"
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              name: unexpected_non_timestamp_ntz_last_order_event
+              column_type: TIMESTAMP_NTZ
+        tags: [dbt_expectations]

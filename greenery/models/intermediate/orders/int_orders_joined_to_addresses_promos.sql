@@ -9,15 +9,10 @@ users AS (
            address_id
     FROM {{ ref('stg_postgres_users') }}
 ),
-/* get order item summary per order */
+/* get order items */
 order_items AS (
-    SELECT order_id,
-           -- get number of unique greenery products included in an order
-           COUNT(DISTINCT(product_id)) as num_unique_products,
-           -- get total quantity of products included in an order
-           SUM(quantity) as total_order_size
+    SELECT *
     FROM {{ ref('stg_postgres_order_items') }}
-    GROUP BY order_id
 ),
 /* get promotion discount in dollars */
 promos AS (
@@ -30,6 +25,16 @@ addresses AS (
     SELECT address_id,
            state AS state_name
     FROM {{ ref('stg_postgres_addresses') }}
+),
+/* get order item summary per order */
+order_items_by_order AS (
+    SELECT order_id,
+        -- get number of unique products per order
+        COUNT(DISTINCT(product_id)) as num_unique_products,
+        -- get total quantity of products per order
+        SUM(quantity) as total_order_size
+    FROM order_items
+    GROUP BY order_id
 ),
 /* create order profile from combination of orders, order items and promotion
 discount */
@@ -53,7 +58,7 @@ order_summary AS (
     LEFT JOIN orders o USING (user_id)
     -- use LEFT JOIN to capture all available users, including those that have
     -- not yet placed orders and so do not yet have any itemized orders
-    LEFT JOIN order_items oi USING (order_id)
+    LEFT JOIN order_items_by_order oi USING (order_id)
     -- use LEFT JOIN to capture orders that do not include products that are
     -- offered as part of a promotion
     LEFT JOIN promos p USING (promo_id)
@@ -87,9 +92,6 @@ order_summary_with_state AS (
                END
            ) AS is_on_time_delivery
     FROM order_summary os
-    -- use INNER JOIN to only capture orders from known addresses
-    -- (the state is a requirement for this model but cannot be determined if
-    -- the delivery address is missing, so exclude orders without an address)
     INNER JOIN addresses a USING (address_id)
 )
 SELECT *

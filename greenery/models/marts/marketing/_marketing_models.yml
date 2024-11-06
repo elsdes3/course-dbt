@@ -3,6 +3,21 @@ version: 2
 models:
   - name: fct_user_orders
     description: aggregated order totals for each user
+    data_tests:
+      - dbt_expectations.expect_table_columns_to_match_ordered_list:
+          column_list:
+            - user_id
+            - state_name
+            - first_order_date
+            - last_order_date
+            - discount_value
+            - order_value
+            - avg_num_unique_products
+            - avg_order_size
+            - num_orders
+            - num_orders_delivered
+            - num_orders_shipping
+            - avg_delivery_time_seconds
     columns:
       - name: user_id
         description: UUID for each unique user on platform
@@ -18,18 +33,33 @@ models:
         data_tests:
           - order_before_delivery:
               field: last_order_date
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: DATE
+        tags: [dbt_expectations]
       - name: last_order_date
         description: date of the last order placed by user
+        data_tests:
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: DATE
+        tags: [dbt_expectations]
       - name: discount_value
         description: total discount value from promotions redeemed by user
         data_tests:
           - not_null
           - positive_values
+          - dbt_utils.expression_is_true:
+              expression: "= 0"
+              where: "first_order_date IS NULL"
+        tags: [dbt_utils]
       - name: order_value
         description: total cost of all orders placed by user
         data_tests:
           - not_null
           - positive_values
+          - dbt_utils.expression_is_true:
+              expression: "= 0"
+              where: "first_order_date IS NULL"
+        tags: [dbt_utils]
       - name: avg_num_unique_products
         description: >
             Average number of Greenery platform products that were purchased
@@ -37,30 +67,69 @@ models:
         data_tests:
           - not_null
           - positive_values
+          - dbt_utils.expression_is_true:
+              expression: "= 0"
+              where: "first_order_date IS NULL"
+        tags: [dbt_utils]
       - name: avg_order_size
         description: >
             Average quantity of all products that were purchased by user
         data_tests:
           - not_null
           - positive_values
+          - dbt_utils.expression_is_true:
+              expression: "= 0"
+              where: "first_order_date IS NULL"
+        tags: [dbt_utils]
       - name: num_orders
         description: total number of orders placed by user
         data_tests:
           - not_null
           - positive_values
+          - dbt_utils.expression_is_true:
+              expression: "= 0"
+              where: "first_order_date IS NULL"
+        tags: [dbt_utils]
       - name: num_orders_delivered
         description: total number of orders delivered to user to-date
         data_tests:
           - not_null
           - positive_values
+          - dbt_utils.expression_is_true:
+              expression: "= 0"
+              where: "first_order_date IS NULL"
+        tags: [dbt_utils]
       - name: num_orders_shipping
         description: total number of orders being shipped to user to-date
         data_tests:
           - not_null
           - positive_values
+          - dbt_utils.expression_is_true:
+              expression: "= 0"
+              where: "first_order_date IS NULL"
+        tags: [dbt_utils]
+      - name: avg_delivery_time_seconds
+        description: average delivery time across all orders, in seconds
+        data_tests:
+          - positive_values
+          - dbt_utils.expression_is_true:
+              expression: "IS NULL"
+              where: "num_orders_delivered = 0"
+        tags: [dbt_utils]
   
   - name: fct_promo_orders
     description: aggregated order totals for each promotion
+    data_tests:
+      - dbt_expectations.expect_table_columns_to_match_ordered_list:
+          column_list:
+            - promo_id
+            - created_at_date
+            - num_orders
+            - promo_discount
+            - shipping_cost
+            - order_cost
+            - avg_num_unique_products
+            - avg_total_order_size
     columns:
       - name: promo_id
         description: Each unique promocode on platform
@@ -74,10 +143,17 @@ models:
                 - Digitized
                 - 'task-force'
                 - leverage
+          - dbt_expectations.expect_column_distinct_count_to_equal_other_table:
+              compare_model: ref('stg_postgres_promos')
+              compare_column_name: promo_id
+        tags: [dbt_expectations]
       - name: created_at_date
         description: Date on which the promotion was used in order
         data_tests:
           - not_null
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: DATE
+        tags: [dbt_expectations]
       - name: num_orders
         description: Number of orders in which the promotion was used
         data_tests:
@@ -95,6 +171,9 @@ models:
         data_tests:
           - not_null
           - positive_values
+          - dbt_utils.expression_is_true:
+              expression: "< order_cost"
+        tags: [dbt_utils]
       - name: order_cost
         description: >
             Total dollar amout of the items in orders in which the promotion

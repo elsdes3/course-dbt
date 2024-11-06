@@ -30,11 +30,53 @@ dbt-run:
 	@tox -e dbt -- run
 .PHONY: dbt-run
 
+## Run dbt staging models
+dbt-run-staging:
+	@echo "+ $@"
+	@./utils.sh 'stg_' run
+.PHONY: dbt-run-staging
+
+## Run dbt intermediate models
+dbt-run-intermediate:
+	@echo "+ $@"
+	@./utils.sh 'int_' run
+.PHONY: dbt-run-intermediate
+
+## Run dbt marts models
+dbt-run-marts:
+	@echo "+ $@"
+	@./utils.sh 'fct_' run
+.PHONY: dbt-run-marts
+
 ## Run dbt test
 dbt-test:
 	@echo "+ $@"
 	@tox -e dbt -- test
 .PHONY: dbt-test
+
+## Run tests on dbt staging models
+dbt-test-staging:
+	@echo "+ $@"
+	@./utils.sh 'stg_' test
+.PHONY: dbt-test-staging
+
+## Run tests on dbt intermediate models
+dbt-test-intermediate:
+	@echo "+ $@"
+	@./utils.sh 'int_' test
+.PHONY: dbt-test-intermediate
+
+## Run tests on dbt marts models
+dbt-test-marts:
+	@echo "+ $@"
+	@./utils.sh 'fct_' test
+.PHONY: dbt-test-marts
+
+## Run dbt run-operations to grant usage
+dbt-grant-usage:
+	@echo "+ $@"
+	@tox -e dbt-grant-usage
+.PHONY: dbt-grant-usage
 
 ## Run dbt snapshot
 dbt-snapshot:
@@ -46,7 +88,7 @@ dbt-snapshot:
 dbt-docs:
 	@echo "+ $@"
 	@tox -e dbt -- docs generate
-	@tox -e dbt -- docs serve --host localhost --port 8001
+	@tox -e dbt -- docs serve --host localhost --port 8002
 .PHONY: dbt-docs
 
 ## Run dbt clean

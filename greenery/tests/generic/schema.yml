@@ -1,0 +1,25 @@
+version: 2
+
+tests:
+  - name: test_orders_before_delivery
+    description: test that timestamp columns are in chronological order
+    arguments:
+      - name: model
+        type: string
+        description: name of data model containing columns to be compared
+      - name: column name
+        type: string
+        description: name of column with expected later tmestamp
+      - name: field
+        type: string
+        description: name of column with expected earlier tmestamp
+
+  - name: test_positive_values
+    description: test that column has positive values
+    arguments:
+      - name: model
+        type: string
+        description: name of data model containing columns to be compared
+      - name: column name
+        type: string
+        description: name of column with expected positive values

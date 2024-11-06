@@ -2,75 +2,121 @@ version: 2
 
 models:
   - name: stg_postgres_users
-    description: contact information for users on the platform
+    description: '{{ doc("users_description") }}'
+    data_tests:
+      - dbt_expectations.expect_table_columns_to_match_ordered_list:
+          column_list:
+            - user_id
+            - first_name
+            - last_name
+            - email
+            - phone_number
+            - created_at
+            - updated_at
+            - address_id
     columns:
       - name: user_id
-        description: UUID for each unique user on platform
+        description: '{{ doc("users_user_id") }}'
         data_tests:
           - not_null
           - unique
       - name: first_name
-        description: first name of the user
+        description: '{{ doc("users_first_name") }}'
         data_tests:
           - not_null
       - name: last_name
-        description: last name of the user
+        description: '{{ doc("users_last_name") }}'
         data_tests:
           - not_null
       - name: email
-        description: email address of the user
+        description: '{{ doc("users_email") }}'
         data_tests:
           - not_null
+          - dbt_expectations.expect_column_values_to_match_regex:
+              regex: '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'
+          - dbt_expectations.expect_column_values_to_match_like_pattern:
+              like_pattern: "%@%.%%"
+        tags: [dbt_expectations]
       - name: phone_number
-        description: phone number of the user
+        description: '{{ doc("users_phone_number") }}'
         data_tests:
           - not_null
+          - dbt_expectations.expect_column_values_to_match_regex:
+              regex: '^[0-9]{3}-[0-9]{3}-[0-9]{4}$'
+          - dbt_expectations.expect_column_value_lengths_to_equal:
+              value: 12
+        tags: [dbt_expectations]
       - name: created_at
-        description: timestamp the user was created
+        description: '{{ doc("users_created_at") }}'
         data_tests:
           - not_null
           - order_before_delivery:
               field: updated_at
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: TIMESTAMP_NTZ
+        tags: [dbt_expectations]
       - name: updated_at
-        description: timestamp the user was last updated
-      - name: address_id
-        description: default delivery address for the user
+        description: '{{ doc("users_updated_at") }}'
         data_tests:
-          - not_null
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: TIMESTAMP_NTZ
+        tags: [dbt_expectations]
+      - name: address_id
+        description: '{{ doc("users_address_id") }}'
 
   - name: stg_postgres_addresses
     description: address of each user on the platform
+    data_tests:
+      - dbt_expectations.expect_table_columns_to_match_ordered_list:
+          column_list:
+            - address_id
+            - address
+            - zipcode
+            - state
+            - country
     columns:
       - name: address_id
-        description: UUID for each unique address on platform
+        description: '{{ doc("addresses_address_id") }}'
         data_tests:
           - not_null
           - unique
       - name: address
-        description: first few lines of the address
+        description: '{{ doc("addresses_address") }}'
         data_tests:
           - not_null
       - name: zipcode
-        description: zipcode of the address
+        description: '{{ doc("addresses_zipcode") }}'
         data_tests:
           - not_null
           - positive_values
+          - dbt_expectations.expect_column_values_to_match_regex:
+              regex: '^[0-9]{4,5}'
+        tags: [dbt_expectations]
       - name: state
-        description: state this delivery address is based in
+        description: '{{ doc("addresses_state") }}'
         data_tests:
           - not_null
+          - dbt_expectations.expect_column_values_to_match_regex:
+              regex: '[A-Z][a-z]+'
+        tags: [dbt_expectations]
       - name: country
-        description: country this delivery address is based in
+        description: '{{ doc("addresses_country") }}'
         data_tests:
           - not_null
           - accepted_values:
               values: ['United States']
 
   - name: stg_postgres_promos
-    description: details of promotions offered
+    description: '{{ doc("promos_description") }}'
+    data_tests:
+      - dbt_expectations.expect_table_columns_to_match_ordered_list:
+          column_list:
+            - promo_id
+            - discount
+            - status
     columns:
       - name: promo_id
-        description: Each unique promocode on platform
+        description: '{{ doc("promos_promo_id") }}'
         data_tests:
           - not_null
           - unique
@@ -83,137 +129,240 @@ models:
                 - 'task-force'
                 - leverage
       - name: discount
-        description: Absolute dollar amount that is given off with promocode
+        description: '{{ doc("promos_discount") }}'
         data_tests:
           - positive_values
       - name: status
-        description: Is the promo code active or disabled
+        description: '{{ doc("promos_status") }}'
         data_tests:
           - not_null
           - accepted_values:
               values: [inactive, active]
 
   - name: stg_postgres_products
-    description: price and available quantity of products
+    description: '{{ doc("products_description") }}'
+    data_tests:
+      - dbt_expectations.expect_table_columns_to_match_ordered_list:
+          column_list:
+            - product_id
+            - name
+            - price
+            - inventory
     columns:
       - name: product_id
-        description: UUID for each unique product on platform
+        description: '{{ doc("products_product_id") }}'
         data_tests:
           - not_null
           - unique
       - name: name
-        description: Name of the product
+        description: '{{ doc("products_name") }}'
         data_tests:
           - not_null
       - name: price
-        description: Price of the product
+        description: '{{ doc("products_price") }}'
         data_tests:
           - not_null
           - positive_values
       - name: inventory
-        description: Amount of the inventory we have for this product
+        description: '{{ doc("products_inventory") }}'
         data_tests:
           - not_null
           - positive_values
 
   - name: stg_postgres_orders
-    description: orders placed on platform, includes shipping and tracking info
+    description: '{{ doc("orders_description") }}'
+    data_tests:
+      - dbt_expectations.expect_table_columns_to_match_ordered_list:
+          column_list:
+            - order_id
+            - user_id
+            - promo_id
+            - address_id
+            - created_at
+            - order_cost
+            - shipping_cost
+            - order_total
+            - tracking_id
+            - shipping_service
+            - estimated_delivery_at
+            - delivered_at
+            - status
     columns:
       - name: order_id
-        description: UUID for each unique order on platform
+        description: '{{ doc("orders_order_id") }}'
         data_tests:
           - not_null
           - unique
       - name: user_id
-        description: UserId of the user that placed this order
+        description: '{{ doc("orders_user_id") }}'
       - name: promo_id
-        description: PromoId if any was used in the order
+        description: '{{ doc("orders_promo_id") }}'
+        data_tests:
+          - dbt_expectations.expect_column_distinct_count_to_equal_other_table:
+              compare_model: ref('stg_postgres_promos')
+              compare_column_name: promo_id
+              row_condition: "promo_id is not null"
+        tags: [dbt_expectations]
       - name: address_id
-        description: Delivery address for this order
+        description: '{{ doc("orders_address_id") }}'
       - name: created_at
-        description: Timestamp when the order was created
+        description: '{{ doc("orders_created_at") }}'
         data_tests:
           - not_null
           - order_before_delivery:
               field: delivered_at
           - order_before_delivery:
               field: estimated_delivery_at
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: TIMESTAMP_NTZ
+        tags: [dbt_expectations]
       - name: order_cost
-        description: Dollar amout of the items in the order
+        description: '{{ doc("orders_order_cost") }}'
         data_tests:
           - not_null
           - positive_values
       - name: shipping_cost
-        description: Cost of shipping for the order
+        description: '{{ doc("orders_shipping_cost") }}'
         data_tests:
           - not_null
           - positive_values
+          - dbt_utils.expression_is_true:
+              expression: "<order_cost"
+        tags: [dbt_utils]
       - name: order_total
-        description: Total cost of the order including shipping
+        description: '{{ doc("orders_order_total") }}'
         data_tests:
           - not_null
           - positive_values
+          - dbt_utils.expression_is_true:
+              expression: "=ROUND(order_cost+shipping_cost, 2)"
+              where: "promo_id IS NULL"
+          - dbt_utils.expression_is_true:
+              expression: "<ROUND(order_cost+shipping_cost, 2)"
+              where: "promo_id IS NOT NULL"
+        tags: [dbt_utils]
       - name: tracking_id
-        description: Tracking number for the order/package
+        description: '{{ doc("orders_tracking_id") }}'
       - name: shipping_service
-        description: Company that was used for shipping
+        description: '{{ doc("orders_shipping_service") }}'
+        data_tests:
+          - accepted_values:
+              values: [ups, usps, dhl, fedex]
       - name: estimated_delivery_at
-        description: Estimated timestamp of delivery
+        description: '{{ doc("orders_estimated_delivery_at") }}'
+        data_tests:
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: TIMESTAMP_NTZ
+        tags: [dbt_expectations]
       - name: delivered_at
-        description: Actual timestamp of delivery
+        description: '{{ doc("orders_delivered_at") }}'
+        data_tests:
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: TIMESTAMP_NTZ
+        tags: [dbt_expectations]
       - name: status
-        description: Status of the order
+        description: '{{ doc("orders_status") }}'
         data_tests:
           - not_null
           - accepted_values:
-              values: ['delivered', 'shipped', 'preparing']
+              values: [delivered, shipped, preparing]
 
   - name: stg_postgres_order_items
-    description: ID and quantity of products included in each order
+    description: '{{ doc("order_items_description") }}'
+    data_tests:
+      - dbt_expectations.expect_table_columns_to_match_ordered_list:
+          column_list:
+            - order_id
+            - product_id
+            - quantity
     columns:
       - name: order_id
-        description: OrderId of this order
+        description: '{{ doc("orders_order_id") }}'
         data_tests:
           - not_null
+          - dbt_expectations.expect_column_distinct_count_to_equal_other_table:
+              compare_model: ref('stg_postgres_orders')
+              compare_column_name: order_id
+        tags: [dbt_expectations]
       - name: product_id
-        description: ProductId of a single item in this order
+        description: '{{ doc("orders_product_id") }}'
         data_tests:
           - not_null
+          - dbt_expectations.expect_column_distinct_count_to_equal_other_table:
+              compare_model: ref('stg_postgres_products')
+              compare_column_name: product_id
+        tags: [dbt_expectations]
       - name: quantity
-        description: Number of units of the product in this order
+        description: '{{ doc("order_items_quantity") }}'
         data_tests:
           - not_null
           - positive_values
 
   - name: stg_postgres_events
-    description: user events on the Greenery platform website (analytics)
+    description: '{{ doc("events_description") }}'
+    data_tests:
+      - dbt_expectations.expect_table_columns_to_match_ordered_list:
+          column_list:
+            - event_id
+            - session_id
+            - user_id
+            - page_url
+            - created_at
+            - event_type
+            - order_id
+            - product_id
     columns:
       - name: event_id
-        description: UUID of each unique event on the platform
+        description: '{{ doc("events_event_id") }}'
         data_tests:
           - not_null
           - unique
       - name: session_id
-        description: >
-            UUID of each browsing session on the platform which can
-            contain many events
+        description: '{{ doc("events_session_id") }}'
+      - name: user_id
+        description: '{{ doc("events_user_id") }}'
+        data_tests:
+          - dbt_expectations.expect_column_distinct_count_to_equal_other_table:
+              compare_model: ref('stg_postgres_orders')
+              compare_column_name: user_id
+        tags: [dbt_expectations]
       - name: page_url
-        description:  URL that the event happened on
+        description: '{{ doc("events_page_url") }}'
         data_tests:
           - not_null
+          - dbt_expectations.expect_column_values_to_match_regex:
+              regex: '(https:\/\/www\.|http:\/\/www\.|https:\/\/|http:\/\/)?[a-zA-Z0-9]{2,}(\.[a-zA-Z0-9]{2,})(\.[a-zA-Z0-9]{2,})?\/[a-zA-Z0-9]{2,}'
+        tags: [dbt_expectations]
       - name: created_at
-        description: Timestamp of the event
+        description: '{{ doc("events_created_at") }}'
         data_tests:
           - not_null
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: TIMESTAMP_NTZ
+        tags: [dbt_expectations]
       - name: event_type
-        description: Type of event
+        description: '{{ doc("events_event_type") }}'
         data_tests:
           - not_null
+          - accepted_values:
+              values: [checkout, package_shipped, add_to_cart, page_view]
       - name: order_id
-        description: >
-            UUID for each unique order on platform, if the event is specific
-            to an order (mostly used for checkout)
+        description: '{{ doc("events_order_id") }}'
+        data_tests:
+          - dbt_expectations.expect_column_distinct_count_to_equal_other_table:
+              compare_model: ref('stg_postgres_orders')
+              compare_column_name: order_id
+          - dbt_utils.expression_is_true:
+              expression: "IS NULL"
+              where: "event_type IN ('add_to_cart', 'page_view')"
+        tags: [dbt_expectations, dbt_utils]
       - name: product_id
-        description: >
-            UUID for each unique product on platform, if the event is specific
-            to a product
+        description: '{{ doc("events_product_id") }}'
+        data_tests:
+          - dbt_expectations.expect_column_distinct_count_to_equal_other_table:
+              compare_model: ref('stg_postgres_products')
+              compare_column_name: product_id
+          - dbt_utils.expression_is_true:
+              expression: "IS NULL"
+              where: "event_type IN ('checkout', 'package_shipped')"
+        tags: [dbt_expectations, dbt_utils]

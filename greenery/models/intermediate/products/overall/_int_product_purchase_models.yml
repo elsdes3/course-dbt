@@ -2,25 +2,40 @@ version: 2
 
 models:
   - name: int_product_purchases_filtered
-    description: user events on the platform for sessions ending in a purchase
+    description: "{{ doc('int_product_purchases_filtered_description') }}"
+    data_tests:
+      - dbt_expectations.expect_table_columns_to_match_ordered_list:
+          column_list:
+            - event_id
+            - user_id
+            - session_id
+            - created_at
+            - event_type
+            - product_id
+            - is_purchased
     columns:
       - name: event_id
-        description: UUID of each unique event on the platform
+        description: "{{ doc('events_event_id') }}"
         data_tests:
           - not_null
           - unique
+      - name: user_id
+        description: "{{ doc('events_user_id') }}"
+        data_tests:
+          - not_null
       - name: session_id
-        description: >
-            UUID of each browsing session on the platform which can contain
-            many events
+        description: "{{ doc('events_session_id') }}"
         data_tests:
           - not_null
       - name: created_at
-        description: Timestamp of the event
+        description: "{{ doc('events_created_at') }}"
         data_tests:
           - not_null
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: TIMESTAMP_NTZ
+        tags: [dbt_expectations]
       - name: event_type
-        description: Type of event
+        description: "{{ doc('events_event_type') }}"
         data_tests:
           - not_null
           - accepted_values:
@@ -30,126 +45,165 @@ models:
                 - checkout
                 - package_shipped
       - name: product_id
-        description: > 
-            UUID for each unique product on platform, if the event is specific
-            to a product
+        description: "{{ doc('events_event_id') }}"
         data_tests:
-          - not_null
+          - dbt_expectations.expect_column_distinct_count_to_equal_other_table:
+              compare_model: ref('stg_postgres_products')
+              compare_column_name: product_id
+          - dbt_utils.expression_is_true:
+              expression: "IS NULL"
+              where: "event_type IN ('checkout', 'package_shipped')"
+        tags: [dbt_expectations, dbt_utils]
       - name: is_purchased
-        description: indicator that purchase occurred at end of session
+        description: "{{ doc('int_product_purchases_filtered_is_purchased') }}"
         data_tests:
           - not_null
           - accepted_values:
               values: [1]
 
   - name: int_product_non_purchases_filtered
-    description: >
-        user events on the platform for sessions not ending in a purchase
+    description: "{{ doc('int_product_non_purchases_filtered_description') }}"
+    data_tests:
+      - dbt_expectations.expect_table_columns_to_match_ordered_list:
+          column_list:
+            - event_id
+            - user_id
+            - session_id
+            - created_at
+            - event_type
+            - product_id
+            - is_purchased
     columns:
       - name: event_id
-        description: UUID of each unique event on the platform
+        description: "{{ doc('events_event_id') }}"
         data_tests:
           - not_null
           - unique
+      - name: user_id
+        description: "{{ doc('events_user_id') }}"
+        data_tests:
+          - not_null
       - name: session_id
-        description: >
-            UUID of each browsing session on the platform which can contain
-            many events
+        description: "{{ doc('events_session_id') }}"
         data_tests:
           - not_null
       - name: created_at
-        description: Timestamp of the event
+        description: "{{ doc('events_created_at') }}"
         data_tests:
           - not_null
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: TIMESTAMP_NTZ
+        tags: [dbt_expectations]
       - name: event_type
-        description: Type of event
+        description: "{{ doc('events_event_type') }}"
         data_tests:
           - not_null
           - accepted_values:
               values: ['page_view', 'add_to_cart']
       - name: product_id
-        description: > 
-            UUID for each unique product on platform, if the event is specific
-            to a product
+        description: "{{ doc('events_product_id') }}"
         data_tests:
           - not_null
+          - dbt_expectations.expect_column_distinct_count_to_equal_other_table:
+              compare_model: ref('stg_postgres_products')
+              compare_column_name: product_id
+        tags: [dbt_expectations]
       - name: is_purchased
-        description: >
-            indicator that purchase did not occurred at end of session
+        description: "{{ doc('int_product_non_purchases_filtered_is_purchased') }}"
         data_tests:
           - not_null
           - accepted_values:
               values: [0]
 
   - name: int_events_sessions_aggregated_to_product
-    description: >
-        count of product page views across sessions ending in a purchase, not
-        ending a purchase, and number of purchases
+    description: "{{ doc('int_sessions_aggregated_to_product_description') }}"
+    data_tests:
+      - dbt_expectations.expect_table_columns_to_match_ordered_list:
+          column_list:
+            - product_id
+            - num_non_purchase_page_view_sessions
+            - num_purchase_page_view_sessions
+            - num_purchases
+            - num_page_views
     columns:
       - name: product_id
-        description: UUID for each unique product on platform
+        description: "{{ doc('products_product_id') }}"
         data_tests:
           - not_null
           - unique
+          - dbt_expectations.expect_column_distinct_count_to_equal_other_table:
+              compare_model: ref('stg_postgres_products')
+              compare_column_name: product_id
+        tags: [dbt_expectations]
       - name: num_non_purchase_page_view_sessions
-        description: >
-          number of sesssions in which a product was viewed, that did not end
-          in a purchase
+        description: "{{ doc('int_sessions_aggregated_to_product_num_non_purchase_page_view_sessions') }}"
         data_tests:
           - not_null
           - positive_values
       - name: num_purchase_page_view_sessions
-        description: >
-          number of sesssions in which a product was viewed, that did end in a
-          purchase
+        description: "{{ doc('int_sessions_aggregated_to_product_num_purchase_page_view_sessions') }}"
         data_tests:
           - not_null
           - positive_values
       - name: num_purchases
-        description: number of purchases of a product
+        description: "{{ doc('int_sessions_aggregated_to_product_num_purchases') }}"
         data_tests:
           - not_null
           - positive_values
       - name: num_page_views
-        description: number of views of a product page
+        description: "{{ doc('int_sessions_aggregated_to_product_num_page_views') }}"
         data_tests:
           - not_null
           - positive_values
 
   - name: int_products_page_viewing_time_averaged
-    description: >
-        average and spread (standard deviation) of time spent viewing product
-        page
+    description: "{{ doc('int_products_page_viewing_time_averaged_description') }}"
+    data_tests:
+      - dbt_expectations.expect_table_columns_to_match_ordered_list:
+          column_list:
+            - product_id
+            - avg_time_on_page_seconds
+            - std_time_on_page_seconds
     columns:
       - name: product_id
-        description: UUID for each unique product on platform
+        description: "{{ doc('products_product_id') }}"
         data_tests:
           - not_null
           - unique
+          - dbt_expectations.expect_column_distinct_count_to_equal_other_table:
+              compare_model: ref('stg_postgres_products')
+              compare_column_name: product_id
+        tags: [dbt_expectations]
       - name: avg_time_on_page_seconds
-        description: average time spent viewing product page, in seconds
+        description: "{{ doc('int_products_page_viewing_time_averaged_avg_time_on_page_seconds') }}"
         data_tests:
           - not_null
           - positive_values
       - name: std_time_on_page_seconds
-        description: >
-            standard deviation of time spent viewing product page, in seconds
+        description: "{{ doc('int_products_page_viewing_time_averaged_std_time_on_page_seconds') }}"
         data_tests:
           - not_null
           - positive_values
 
   - name: int_products_purchase_abandoned_cart_sessions_summed
-    description: count of carts created per product, across all sessions
+    description: "{{ doc('int_products_purchase_abandoned_cart_sessions_summed_description') }}"
+    data_tests:
+      - dbt_expectations.expect_table_columns_to_match_ordered_list:
+          column_list:
+            - product_id
+            - num_carts
     columns:
       - name: product_id
-        description: UUID for each unique product on platform
+        description: "{{ doc('products_product_id') }}"
         data_tests:
           - not_null
           - unique
+          - dbt_expectations.expect_column_distinct_count_to_equal_other_table:
+              compare_model: ref('stg_postgres_products')
+              compare_column_name: product_id
+        tags: [dbt_expectations]
       - name: num_carts
-        description: >
-            number of times product was added to a cart (i.e. the number of
-            shopping carts created containing a product)
+        description: "{{ doc('int_products_purchase_abandoned_cart_sessions_summed_num_carts') }}"
         data_tests:
           - not_null
           - positive_values

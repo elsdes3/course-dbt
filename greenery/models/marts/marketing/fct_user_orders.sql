@@ -29,13 +29,9 @@ user_order_summary AS (
            -- get total number of orders by user
            ZEROIFNULL(COUNT(order_id)) AS num_orders,
            -- get total number of delivered orders by user
-           SUM(
-               CASE WHEN status = 'delivered' THEN 1 ELSE 0 END
-           ) AS num_orders_delivered,
+           {{ label_status('delivered') }},
            -- get total number of orders by user that are shipping
-           SUM(
-               CASE WHEN status = 'shipped' THEN 1 ELSE 0 END
-           ) AS num_orders_shipping,
+           {{ label_status('shipped') }},
            -- get average delivery time for delivered orders by user
            ROUND(AVG(delivery_time_seconds)) AS avg_delivery_time_seconds
     FROM orders_with_delivery_time

@@ -2,23 +2,42 @@ version: 2
 
 models:
   - name: fct_products_daily
-    description: aggregated daily event totals for each product
+    description: "{{ doc('fct_products_daily_daily_description') }}"
+    data_tests:
+      - dbt_expectations.expect_table_column_count_to_equal:
+          value: 4
+      - dbt_expectations.expect_table_columns_to_match_ordered_list:
+          column_list:
+            - product_name
+            - created_at_date
+            - num_page_views
+            - num_orders
     columns:
       - name: product_name
-        description: name of each unique event on the platform
+        description: "{{ doc('products_name') }}"
         data_tests:
           - not_null
+          - dbt_expectations.expect_column_distinct_count_to_equal_other_table:
+              compare_model: ref('stg_postgres_products')
+              compare_column_name: name
+        tags: [dbt_expectations]
       - name: created_at_date
-        description: date of event
+        description: "{{ doc('fct_products_daily_created_at_date') }}"
         data_tests:
           - not_null
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: date
+        tags: [dbt_expectations]
       - name: num_page_views
-        description: number of daily page views
+        description: "{{ doc('fct_products_daily_page_views') }}"
         data_tests:
           - not_null
           - positive_values
       - name: num_orders
-        description: number of daily orders
+        description: "{{ doc('fct_products_daily_purchases') }}"
         data_tests:
           - not_null
           - positive_values
+          - dbt_utils.expression_is_true:
+              expression: "<= num_page_views"
+        tags: [dbt_utils]

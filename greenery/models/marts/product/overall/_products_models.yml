@@ -2,54 +2,150 @@ version: 2
 
 models:
   - name: fct_products
-    description: aggregated event totals for each product
+    description: "{{ doc('fct_products_description') }}"
+    data_tests:
+      - dbt_expectations.expect_table_row_count_to_equal_other_table:
+          compare_model: ref("stg_postgres_products")
+      - dbt_expectations.expect_table_column_count_to_equal:
+          value: 10
+      - dbt_expectations.expect_table_columns_to_match_ordered_list:
+          column_list:
+            - product_name
+            - num_page_view_sessions
+            - num_page_views
+            - num_purchases
+            - rank_traffic
+            - rank_purchases
+            - cart_abandonment_rate
+            - avg_time_on_page_seconds
+            - is_high_traffic
+            - is_low_conversions
     columns:
       - name: product_name
-        description: name of each unique event on the platform
+        description: "{{ doc('products_name') }}"
         data_tests:
           - not_null
           - unique
       - name: num_page_view_sessions
-        description: number of sesssions in which a product was viewed
+        description: "{{ doc('fct_products_num_page_view_sessions') }}"
         data_tests:
           - not_null
           - positive_values
+          - dbt_utils.expression_is_true:
+              expression: "<= num_page_views"
+        tags: [dbt_utils]
       - name: num_page_views
-        description: number of views of a product page
+        description: "{{ doc('int_sessions_aggregated_to_product_num_page_views') }}"
         data_tests:
           - not_null
           - positive_values
       - name: num_purchases
-        description: number of product orders
+        description: "{{ doc('int_sessions_aggregated_to_product_num_purchases') }}"
         data_tests:
           - not_null
           - positive_values
+          - dbt_utils.expression_is_true:
+              expression: "<= num_page_views"
+        tags: [dbt_utils]
       - name: rank_traffic
-        description: product rank in terms of page views (traffic)
+        description: "{{ doc('fct_products_rank_traffic') }}"
         data_tests:
           - not_null
           - positive_values
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 1
+        tags: [dbt_expectations]
       - name: rank_purchases
-        description: product rank in terms of purchases
+        description: "{{ doc('fct_products_rank_purchases') }}"
         data_tests:
           - not_null
           - positive_values
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 1
+        tags: [dbt_expectations]
       - name: cart_abandonment_rate
-        description: >
-            rate at which products were added to cart without purchasing
+        description: "{{ doc('fct_products_cart_abandonment_rate') }}"
         data_tests:
           - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 1
+        tags: [dbt_expectations]
       - name: avg_time_on_page_seconds
-        description: average time spent viewing product page, in seconds
+        description: "{{ doc('int_products_page_viewing_time_averaged_avg_time_on_page_seconds') }}"
         data_tests:
           - not_null
           - positive_values
       - name: is_high_traffic
-        description: >
-            whether product ranks is in top 10 in page views (traffic)
+        description: "{{ doc('fct_products_is_high_traffic') }}"
         data_tests:
           - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list: [boolean]
+        tags: [dbt_expectations]
       - name: is_low_conversions
-        description: whether product ranks is in bottom 10 in purchases
+        description: "{{ doc('fct_products_is_low_conversions') }}"
         data_tests:
           - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list: [boolean]
+        tags: [dbt_expectations]
+
+  - name: fct_products_conversion_rates
+    description: "{ doc({'fct_products_conversion_rate_description'}}"
+    data_tests:
+      - dbt_expectations.expect_table_row_count_to_equal_other_table:
+          compare_model: ref("stg_postgres_products")
+      - dbt_expectations.expect_table_columns_to_match_ordered_list:
+          column_list:
+            - product_name
+            - total_num_page_view_sessions
+            - num_purchase_sessions
+            - conversion_rate
+            - first_event
+            - last_event
+    columns:
+      - name: product_name
+        description: '{{ doc("products_name") }}'
+        data_tests:
+          - not_null
+          - unique
+          - dbt_expectations.expect_column_distinct_count_to_equal_other_table:
+              compare_model: ref('stg_postgres_products')
+              compare_column_name: name
+        tags: [dbt_expectations]
+      - name: total_num_page_view_sessions
+        description: "{{ doc('fct_conversion_rate_total_num_page_view_sessions') }}"
+        data_tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
+        tags: [dbt_utils]
+      - name: num_purchase_sessions
+        description: "{{ doc('fct_conversion_rate_num_purchase_sessions') }}"
+        data_tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
+        tags: [dbt_utils]
+      - name: conversion_rate
+        description: "{{ doc('fct_conversion_rate_conversion_rate') }}"
+        data_tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
+        tags: [dbt_utils]
+      - name: first_event
+        description: "{{ doc('fct_conversion_rate_first_event') }}"
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: TIMESTAMP_NTZ
+        tags: [dbt_expectations]
+      - name: last_event
+        description: "{{ doc('fct_conversion_rate_last_event') }}"
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: TIMESTAMP_NTZ
+        tags: [dbt_expectations]
