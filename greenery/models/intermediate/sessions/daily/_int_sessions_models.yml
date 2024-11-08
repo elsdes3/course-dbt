@@ -1,0 +1,77 @@
+version: 2
+
+models:
+  - name: int_sessions_aggregated_to_product_daily
+    description: "{{ doc('int_sessions_daily_description') }}"
+    data_tests:
+      - dbt_expectations.expect_table_columns_to_match_ordered_list:
+          column_list:
+            - session_id
+            - user_id
+            - product_id
+            - created_at_date
+            - num_page_views
+            - num_add_to_carts
+            - num_checkouts
+    columns:
+      - name: session_id
+        description: "{{ doc('events_session_id') }}"
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_distinct_count_to_equal_other_table:
+              compare_model: ref('stg_postgres_events')
+              compare_column_name: session_id
+        tags: [dbt_expectations]
+      - name: user_id
+        description: "{{ doc('events_user_id') }}"
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_distinct_count_to_equal_other_table:
+              compare_model: ref('stg_postgres_events')
+              compare_column_name: user_id
+          - dbt_expectations.expect_column_distinct_count_to_equal_other_table:
+              compare_model: ref('stg_postgres_orders')
+              compare_column_name: user_id
+        tags: [dbt_expectations]
+      - name: product_id
+        description: '{{ doc("products_product_id") }}'
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_distinct_count_to_equal_other_table:
+              compare_model: ref('stg_postgres_products')
+              compare_column_name: product_id
+        tags: [dbt_expectations]
+      - name: created_at_date
+        description: '{{ doc("int_sessions_daily_created_at_date") }}'
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: DATE
+        tags: [dbt_expectations]
+      - name: num_page_views
+        description: '{{ doc("int_sessions_daily_num_page_views") }}'
+        data_tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
+          - dbt_utils.expression_is_true:
+              expression: ">= num_add_to_carts"
+          - dbt_utils.expression_is_true:
+              expression: ">= num_checkouts"
+        tags: [dbt_utils]
+      - name: num_add_to_carts
+        description: '{{ doc("int_sessions_daily_num_add_to_carts") }}'
+        data_tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
+          - dbt_utils.expression_is_true:
+              expression: ">= num_checkouts"
+        tags: [dbt_utils]
+      - name: num_checkouts
+        description: '{{ doc("int_sessions_daily_num_checkouts") }}'
+        data_tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
+        tags: [dbt_utils]
