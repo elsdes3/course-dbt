@@ -55,22 +55,23 @@ We'll also want to make sure that any model feeding into this report is defined 
 
 **Use an exposure on your product analytics model to represent that this is being used in downstream BI tools. Please reference the course content if you have questions.**
 
-I created the following exposure definition file in `models/marts/marketing/exposures/schema.yml`
+I created the following exposure definition file in `models/marts/exposures/schema.yml`
 
 ```bash
 version: 2
 
-exposures:  
+exposures:
   - name: product_funnel_dashboard
     label: Product funnel visualization using BI tool
     type: dashboard
     maturity: medium
     description: >
-        Models to retrieve product analytics by visualizing funnel performance
-        at multiple granularities through BI tool
+        Models to facilitate product analytics by using BI tool to visualize
+        daily funnel performance at user and product granularities through BI
+        tool
 
     depends_on:
-      - ref('fct_products_funnel')
+      - ref('fct_sessions_daily')
 
     owner:
       name: E D
@@ -80,3 +81,5 @@ exposures:
 ```
 
 The `label`, `description` and `tags` properties indicate that these models are being used in a downstream BI tool to visualize the product funnel.
+
+The `dbt` documentation showing the exposure, model developed and DAG is shown [here](https://github.com/elsdes3/course-dbt/blob/main/answers/week_4/week4_answer_part2_dbt_exposure.pdf).

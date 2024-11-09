@@ -5,7 +5,10 @@ exposures:
     label: Product funnel visualization using BI tool
     type: dashboard
     maturity: medium
-    description: Visualize product funnel performance through BI tool (Sigma)
+    description: >
+        Models to facilitate product analytics by using BI tool to visualize
+        daily funnel performance at user and product granularities through BI
+        tool
 
     depends_on:
       - ref('fct_sessions_daily')
