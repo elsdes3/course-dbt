@@ -36,7 +36,8 @@ daily_user_sessions_named AS (
            s.created_at_date,
            s.num_page_views,
            s.num_add_to_carts,
-           s.num_checkouts
+           s.num_checkouts,
+           s.is_bounce_session
     FROM daily_user_sessions AS s
     INNER JOIN user_addresses ua USING (user_id)
     INNER JOIN products p USING (product_id)

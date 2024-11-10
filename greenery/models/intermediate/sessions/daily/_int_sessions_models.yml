@@ -13,6 +13,7 @@ models:
             - num_page_views
             - num_add_to_carts
             - num_checkouts
+            - is_bounce_session
     columns:
       - name: session_id
         description: "{{ doc('events_session_id') }}"
@@ -74,4 +75,11 @@ models:
           - not_null
           - dbt_utils.expression_is_true:
               expression: ">= 0"
+        tags: [dbt_utils]
+      - name: is_bounce_session
+        description: '{{ doc("int_sessions_daily_is_bounce_session") }}'
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: [0, 1]
         tags: [dbt_utils]

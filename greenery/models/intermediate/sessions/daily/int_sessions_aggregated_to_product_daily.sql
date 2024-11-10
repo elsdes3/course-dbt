@@ -39,6 +39,17 @@ daily_user_sessions AS (
     LEFT JOIN non_purchase_sessions_add_to_cart_counts
         USING (session_id, user_id, product_id, created_at_date)
 ),
+bounce_sessions AS (
+    SELECT session_id,
+           user_id,
+           created_at_date,
+           1 AS is_bounce_session
+    FROM daily_user_sessions
+    GROUP BY ALL
+    HAVING SUM(num_page_views) = 1
+    AND SUM(num_add_to_carts) = 0
+    AND SUM(num_checkouts) = 0
+),
 daily_user_sessions_no_nulls AS (
     SELECT session_id,
            user_id,
@@ -46,8 +57,10 @@ daily_user_sessions_no_nulls AS (
            created_at_date,
            ZEROIFNULL(num_page_views) AS num_page_views,
            ZEROIFNULL(num_add_to_carts) AS num_add_to_carts,
-           ZEROIFNULL(num_checkouts) AS num_checkouts
+           ZEROIFNULL(num_checkouts) AS num_checkouts,
+           ZEROIFNULL(is_bounce_session) AS is_bounce_session
     FROM daily_user_sessions
+    LEFT JOIN bounce_sessions USING (session_id, user_id, created_at_date)
 )
 SELECT *
 FROM daily_user_sessions_no_nulls

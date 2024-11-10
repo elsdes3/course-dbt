@@ -27,3 +27,9 @@ number of checkouts per daily session
 number of checkouts per daily session
 
 {% enddocs %}
+
+{% docs int_sessions_daily_is_bounce_session %}
+
+whether the session ended in a bounce event (single product page view)
+
+{% enddocs %}
