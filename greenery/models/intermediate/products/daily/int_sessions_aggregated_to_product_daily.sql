@@ -1,4 +1,12 @@
-WITH events AS (
+WITH int_product_purchases_filtered AS (
+    SELECT *
+    FROM {{ ref('int_product_purchases_filtered') }}
+),
+int_product_non_purchases_filtered AS (
+    SELECT *
+    FROM {{ ref('int_product_non_purchases_filtered') }}
+),
+events AS (
     {{ get_events_by_type('int_product_purchases_filtered') }}
 ),
 non_events AS (

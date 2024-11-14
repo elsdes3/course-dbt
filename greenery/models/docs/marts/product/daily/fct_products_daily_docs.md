@@ -21,3 +21,9 @@ daily page views (traffic) per product
 daily purchases per product
 
 {% enddocs %}
+
+{% docs fct_products_sessions_daily_description %}
+
+counts of three types of events per daily session by product, with product and state names
+
+{% enddocs %}
